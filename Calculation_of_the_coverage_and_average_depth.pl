@@ -9,7 +9,7 @@ sub prtHelp {
         print "----------------------------------- Input Options ----------------------------------\n";
         print "  -i | -inputFile <Input file>\n";
         print "    Sorted BAM file as input file\n";
-        print "  -g | -genomeSize <Nuclear genome size> <Chloroplast genome size> <Mitochondrial genome size>\n";
+        print "  -g | -genomeSize <Chloroplast genome size> <Mitochondrial genome size>\n";
         print "---------------------------------- Output Options ----------------------------------\n";
         print "  -o | -outputFolder <Output folder name/path>\n";
         print "    Output folder should be created if not existing before processing\n";
@@ -35,7 +35,7 @@ my $helpAsked;
 GetOptions(
                         "s|pathToSamtools=s" => \$samtools_path,
                         "i|inputFile=s" => \$inputFileName,
-                        "g|genomeSize=i{3}" => \@genome_size,
+                        "g|genomeSize=i{2}" => \@genome_size,
                         "o|outputFolder=s" => \$outFolder,
                         "p|prefixOfOutputFile=s" => \$prefix,
                         "h|help" => \$helpAsked,
@@ -59,25 +59,6 @@ my $coverage = 0;
 my $all_depth_file = $prefix.'_all.depth';
 system(qq($samtools_path depth $inputFileName > $outFolder/$all_depth_file));
 
-my $nuclear_depth_file = $prefix.'_nuclear.depth';
-my $nuclear_average_depth_file = $prefix.'_nuclear.average_depth';
-system(qq(awk 'length(\$1)<=2 && \$1!~/Mt/ && \$1!~/Pt/{print}' $outFolder/$all_depth_file > $outFolder/$nuclear_depth_file));
-open IN, "$outFolder/$nuclear_depth_file";
-open OUT, ">$outFolder/$nuclear_average_depth_file";
-my $lines_nuclear = 0;
-my $bases_nuclear = 0;
-while(<IN>){
-  chomp;
-  $lines_nuclear++;
-  if(/(.+)\t(.+)/){
-  $bases_nuclear += $2;
-  }
-}
-$average_depth = $bases_nuclear/$genome_size[0];
-$coverage = $lines_nuclear/$genome_size[0];
-print OUT "$inputFileName\tCoverage: $coverage\n";
-print OUT "$inputFileName\tAverage depth: $average_depth\n";
-
 my $Pt_depth_file = $prefix.'_Pt.depth';
 my $Pt_average_depth_file = $prefix.'_Pt.average_depth';
 system(qq(awk '\$1~/Pt/{print}' $outFolder/$all_depth_file > $outFolder/$Pt_depth_file));
@@ -92,8 +73,8 @@ while(<IN>){
   $bases_Pt += $2;
   }
 }
-$average_depth = $bases_Pt/$genome_size[1];
-$coverage = $lines_Pt/$genome_size[1];
+$average_depth = $bases_Pt/$genome_size[0];
+$coverage = $lines_Pt/$genome_size[0];
 print OUT "$inputFileName\tCoverage: $coverage\n";
 print OUT "$inputFileName\tAverage depth: $average_depth\n";
 
@@ -111,8 +92,8 @@ while(<IN>){
   $bases_Mt += $2;
   }
 }
-$average_depth = $bases_Mt/$genome_size[2];
-$coverage = $lines_Mt/$genome_size[2];
+$average_depth = $bases_Mt/$genome_size[1];
+$coverage = $lines_Mt/$genome_size[1];
 print OUT "$inputFileName\tCoverage: $coverage\n";
 print OUT "$inputFileName\tAverage depth: $average_depth\n";
 
